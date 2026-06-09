@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <section class="translator-container">
+        <div class="selectors-group">
+            <div class="custom-select" id="source-lang-select">
+                <div class="select-trigger">
+                    <span>Détecter la langue</span>
+                    <span class="arrow">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </span>
+                </div>
+                <input type="hidden" name="source-language" id="source-language" value="Détecter la langue">
+            </div>
+
+            <button class="swap-languages-btn" id="swap-languages-btn" type="button" title="Permuter les langues">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3L21 7L17 11"></path>
+                    <path d="M3 7H21"></path>
+                    <path d="M7 21L3 17L7 13"></path>
+                    <path d="M21 17H3"></path>
+                </svg>
+            </button>
+
+            <div class="custom-select" id="target-lang-select">
+                <div class="select-trigger">
+                    <span>Anglais</span>
+                    <span class="arrow">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </span>
+                </div>
+                <input type="hidden" name="target-language" id="target-language" value="Anglais">
+            </div>
+        </div>
+
+        <div class="textareas-group">
+            <div class="textarea-wrapper" id="source-text-wrapper">
+                <textarea id="source-text" placeholder="Saisir du texte" maxlength="5000"></textarea>
+                <button class="textarea-btn clear-btn" id="clear-text-btn" type="button" title="Effacer le texte">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="textarea-btn mic-btn" id="mic-btn" type="button" title="Traduction vocale">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                        <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                </button>
+                <div class="char-count" id="char-count">0 / 5000</div>
+            </div>
+
+            <div class="textarea-wrapper" id="target-text-wrapper">
+                <textarea id="translated-text" readonly placeholder="Traduction"></textarea>
+                <button class="textarea-btn speaker-btn" id="speaker-btn" type="button" title="Écouter la traduction">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                </button>
+                <button class="textarea-btn copy-btn" id="copy-text-btn" type="button" title="Copier la traduction">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+                <div class="loader"></div>
+            </div>
+        </div>
+
+
+
+        <!-- Language Selection Modal Overlay -->
+        <div class="language-modal" id="language-modal">
+            <div class="modal-header">
+                <div class="search-container">
+                    <input type="text" id="language-search" placeholder="Rechercher une langue">
+                    <span class="search-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                </div>
+                <button class="close-modal-btn" id="close-modal-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="languages-grid" id="languages-grid">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const languages = [
+            "Afrikaans", "Allemand", "Anglais", "Arabe", "Bengali", "Bulgare",
+            "Catalan", "Chinois", "Coréen", "Croate", "Danois", "Espagnol", "Estonien", "Finnois",
+            "Français", "Galicien", "Géorgien", "Grec", "Gujarati", "Hébreu", "Hindi", "Hongrois",
+            "Indonésien", "Islandais", "Italien", "Japonais", "Kannada", "Kazakh", "Khmer", "Letton",
+            "Lituanien", "Macédonien", "Malais", "Malayalam", "Marathi", "Mongol", "Népalais",
+            "Néerlandais", "Norvégien", "Ourdou", "Ouzbek", "Persan", "Polonais", "Portugais",
+            "Pendjabi", "Roumain", "Russe", "Serbe", "Slovaque", "Slovène", "Somali", "Suédois",
+            "Swahili", "Tagalog", "Tamoul", "Tchèque", "Télougou", "Thaï", "Turc", "Ukrainien",
+            "Vietnamien", "Gallois", "Yoruba", "Zoulou"
+        ];
+
+        // Comprehensive map of all 66 speech-supported languages mapped to their BCP 47 locale codes
+        const languageLocaleMap = {
+            "Afrikaans": "af-ZA",
+            "Allemand": "de-DE",
+            "Anglais": "en-US",
+            "Arabe": "ar-SA",
+            "Bengali": "bn-IN",
+            "Bulgare": "bg-BG",
+            "Catalan": "ca-ES",
+            "Chinois": "zh-CN",
+            "Coréen": "ko-KR",
+            "Croate": "hr-HR",
+            "Danois": "da-DK",
+            "Espagnol": "es-ES",
+            "Estonien": "et-EE",
+            "Finnois": "fi-FI",
+            "Français": "fr-FR",
+            "Galicien": "gl-ES",
+            "Géorgien": "ka-GE",
+            "Grec": "el-GR",
+            "Gujarati": "gu-IN",
+            "Hébreu": "he-IL",
+            "Hindi": "hi-IN",
+            "Hongrois": "hu-HU",
+            "Indonésien": "id-ID",
+            "Islandais": "is-IS",
+            "Italien": "it-IT",
+            "Japonais": "ja-JP",
+            "Kannada": "kn-IN",
+            "Kazakh": "kk-KZ",
+            "Khmer": "km-KH",
+            "Letton": "lv-LV",
+            "Lituanien": "lt-LT",
+            "Macédonien": "mk-MK",
+            "Malais": "ms-MY",
+            "Malayalam": "ml-IN",
+            "Marathi": "mr-IN",
+            "Mongol": "mn-MN",
+            "Népalais": "ne-NP",
+            "Néerlandais": "nl-NL",
+            "Norvégien": "no-NO",
+            "Ourdou": "ur-PK",
+            "Ouzbek": "uz-UZ",
+            "Persan": "fa-IR",
+            "Polonais": "pl-PL",
+            "Portugais": "pt-PT",
+            "Pendjabi": "pa-IN",
+            "Roumain": "ro-RO",
+            "Russe": "ru-RU",
+            "Serbe": "sr-RS",
+            "Slovaque": "sk-SK",
+            "Slovène": "sl-SI",
+            "Somali": "so-SO",
+            "Suédois": "sv-SE",
+            "Swahili": "sw-KE",
+            "Tagalog": "fil-PH",
+            "Tamoul": "ta-IN",
+            "Tchèque": "cs-CZ",
+            "Télougou": "te-IN",
+            "Thaï": "th-TH",
+            "Turc": "tr-TR",
+            "Ukrainien": "uk-UA",
+            "Vietnamien": "vi-VN",
+            "Gallois": "cy-GB",
+            "Yoruba": "yo-NG",
+            "Zoulou": "zu-ZA"
+        };
+
+        let activeSide = null;
+        let debounceTimer = null;
+
+        const modal = document.getElementById('language-modal');
+        const searchInput = document.getElementById('language-search');
+        const languagesGrid = document.getElementById('languages-grid');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const swapBtn = document.getElementById('swap-languages-btn');
+
+        const sourceSelect = document.getElementById('source-lang-select');
+        const targetSelect = document.getElementById('target-lang-select');
+
+        const sourceHiddenInput = document.getElementById('source-language');
+        const targetHiddenInput = document.getElementById('target-language');
+
+        const sourceText = document.getElementById('source-text');
+        const translatedText = document.getElementById('translated-text');
+        const clearBtn = document.getElementById('clear-text-btn');
+        const copyBtn = document.getElementById('copy-text-btn');
+        const speakerBtn = document.getElementById('speaker-btn');
+        const charCount = document.getElementById('char-count');
+        const targetWrapper = document.getElementById('target-text-wrapper');
+
+        // Track the currently playing audio element for Google TTS
+        let currentAudio = null;
+
+        // Helper to stop any ongoing speech synthesis
+        function stopSpeaking() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            speakerBtn.querySelector('svg').style.stroke = '';
+        }
+
+        // Opening events
+        sourceSelect.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openModal('source');
+        });
+
+        targetSelect.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openModal('target');
+        });
+
+        // Close events
+        closeModalBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Language swap functionality
+        swapBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // Swap text values
+            const srcTextVal = sourceText.value;
+            const targetTextVal = translatedText.value;
+            sourceText.value = targetTextVal;
+            translatedText.value = srcTextVal;
+
+            // Update character count and clear button visibility
+            charCount.textContent = `${sourceText.value.length} / 5000`;
+            if (sourceText.value.length > 0) {
+                clearBtn.style.opacity = '1';
+                clearBtn.style.pointerEvents = 'auto';
+            } else {
+                clearBtn.style.opacity = '0';
+                clearBtn.style.pointerEvents = 'none';
+            }
+
+            const sourceVal = sourceHiddenInput.value;
+            const targetVal = targetHiddenInput.value;
+
+            if (sourceVal === "Détecter la langue") {
+                sourceHiddenInput.value = targetVal;
+                sourceSelect.querySelector('span:first-child').textContent = targetVal;
+
+                const newTarget = targetVal === "Français" ? "Anglais" : "Français";
+                targetHiddenInput.value = newTarget;
+                targetSelect.querySelector('span:first-child').textContent = newTarget;
+            } else {
+                sourceHiddenInput.value = targetVal;
+                sourceSelect.querySelector('span:first-child').textContent = targetVal;
+
+                targetHiddenInput.value = sourceVal;
+                targetSelect.querySelector('span:first-child').textContent = sourceVal;
+            }
+
+            performTranslation();
+        });
+
+        function openModal(side) {
+            activeSide = side;
+            modal.classList.add('active');
+            searchInput.value = '';
+
+            if (side === 'source') {
+                searchInput.placeholder = 'Langue source :';
+            } else {
+                searchInput.placeholder = 'Langue cible :';
+            }
+
+            populateLanguages();
+            searchInput.focus();
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            activeSide = null;
+        }
+
+        function populateLanguages() {
+            languagesGrid.innerHTML = '';
+            const currentVal = activeSide === 'source' ? sourceHiddenInput.value : targetHiddenInput.value;
+
+            let list = [];
+            if (activeSide === 'source') {
+                list.push("Détecter la langue");
+            }
+
+            languages.forEach(lang => {
+                if (!list.includes(lang)) {
+                    list.push(lang);
+                }
+            });
+
+            list.forEach(lang => {
+                const item = document.createElement('div');
+                item.classList.add('lang-item');
+                item.textContent = lang;
+                item.setAttribute('data-value', lang);
+
+                if (lang === currentVal) {
+                    item.classList.add('selected');
+                }
+
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectLanguage(lang);
+                });
+
+                languagesGrid.appendChild(item);
+            });
+        }
+
+        function selectLanguage(lang) {
+            if (activeSide === 'source') {
+                sourceHiddenInput.value = lang;
+                sourceSelect.querySelector('span:first-child').textContent = lang;
+                sourceHiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                targetHiddenInput.value = lang;
+                targetSelect.querySelector('span:first-child').textContent = lang;
+                targetHiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            closeModal();
+        }
+
+        // Live Search Input Filter
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const items = languagesGrid.querySelectorAll('.lang-item');
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        });
+
+        // Translate logic execution
+        function performTranslation() {
+            stopSpeaking();
+            const text = sourceText.value;
+            if (!text.trim()) {
+                translatedText.value = '';
+                return;
+            }
+
+            const sourceLang = sourceHiddenInput.value;
+            const targetLang = targetHiddenInput.value;
+
+            targetWrapper.classList.add('loading');
+
+            fetch('/translate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: text,
+                    source_lang: sourceLang,
+                    target_lang: targetLang
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    translatedText.value = data.translated_text || '';
+                })
+                .catch(err => {
+                    console.error('Translation error:', err);
+                })
+                .finally(() => {
+                    targetWrapper.classList.remove('loading');
+                });
+        }
+
+        // Debounced trigger on input
+        function handleInput() {
+            const text = sourceText.value;
+            charCount.textContent = `${text.length} / 5000`;
+
+            if (text.length > 0) {
+                clearBtn.style.opacity = '1';
+                clearBtn.style.pointerEvents = 'auto';
+            } else {
+                clearBtn.style.opacity = '0';
+                clearBtn.style.pointerEvents = 'none';
+                translatedText.value = '';
+                clearTimeout(debounceTimer);
+                return;
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(performTranslation, 500);
+        }
+
+        sourceText.addEventListener('input', handleInput);
+        sourceHiddenInput.addEventListener('change', performTranslation);
+        targetHiddenInput.addEventListener('change', performTranslation);
+
+        // Clear text button action
+        clearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sourceText.value = '';
+            translatedText.value = '';
+            charCount.textContent = '0 / 5000';
+            clearBtn.style.opacity = '0';
+            clearBtn.style.pointerEvents = 'none';
+            stopSpeaking();
+            sourceText.focus();
+        });
+
+        // Copy translation button action with tick feedback
+        copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const text = translatedText.value;
+            if (!text) return;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalSVG = copyBtn.innerHTML;
+                copyBtn.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                `;
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalSVG;
+                }, 1500);
+            });
+        });
+
+        // Speaker button action using backend Google TTS proxy
+        speakerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const text = translatedText.value;
+            const targetLang = targetHiddenInput.value;
+            if (!text) return;
+
+            // If audio is already playing, stop it (toggle behavior)
+            if (currentAudio) {
+                stopSpeaking();
+                return;
+            }
+
+            const locale = languageLocaleMap[targetLang] || 'en-US';
+            const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${locale}`;
+
+            currentAudio = new Audio(url);
+
+            // Highlight the button during playback
+            speakerBtn.querySelector('svg').style.stroke = '#1a73e8';
+
+            currentAudio.onerror = () => {
+                speakerBtn.querySelector('svg').style.stroke = '';
+                currentAudio = null;
+                alert("La synthèse vocale n'est pas disponible pour cette langue.");
+            };
+
+            currentAudio.play()
+                .then(() => {
+                    currentAudio.onended = () => {
+                        speakerBtn.querySelector('svg').style.stroke = '';
+                        currentAudio = null;
+                    };
+                })
+                .catch(err => {
+                    console.warn("Playback interrupted or failed:", err);
+                    speakerBtn.querySelector('svg').style.stroke = '';
+                    currentAudio = null;
+                });
+        });
+
+        // Speech Recognition API for Vocal Input
+        const micBtn = document.getElementById('mic-btn');
+        let recognition = null;
+        let isListening = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'fr-FR';
+            // Checked natively supportedSpeech recognition config
+
+            recognition.onstart = () => {
+                isListening = true;
+                micBtn.classList.add('listening');
+                micBtn.querySelector('svg').style.stroke = '#ea4335'; // Red icon when recording
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                micBtn.classList.remove('listening');
+                micBtn.querySelector('svg').style.stroke = ''; // Restore style
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                sourceText.value = (sourceText.value + " " + transcript).trim();
+                handleInput(); // Triggers automatic debounce translation
+            };
+
+            micBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    const srcLang = sourceHiddenInput.value;
+                    // Get locale from map, fallback to French if not found
+                    recognition.lang = languageLocaleMap[srcLang] || 'fr-FR';
+                    recognition.start();
+                }
+            });
+        } else {
+            // Hide mic button if SpeechRecognition is not supported by user browser
+            micBtn.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
