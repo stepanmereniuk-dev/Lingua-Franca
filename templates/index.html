@@ -50,27 +50,30 @@
 
         <div class="textareas-group">
             <div class="textarea-wrapper" id="source-text-wrapper">
-                <textarea id="source-text" placeholder="Saisir du texte" maxlength="5000"></textarea>
+                <textarea id="source-text" placeholder="Saisir du texte" maxlength="2000"></textarea>
                 <button class="textarea-btn clear-btn" id="clear-text-btn" type="button" title="Effacer le texte">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
                 <button class="textarea-btn mic-btn" id="mic-btn" type="button" title="Traduction vocale">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
                         <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
                         <line x1="12" y1="19" x2="12" y2="22"></line>
                     </svg>
                 </button>
-                <div class="char-count" id="char-count">0 / 5000</div>
+                <div class="char-count" id="char-count">0 / 2000</div>
             </div>
 
             <div class="textarea-wrapper" id="target-text-wrapper">
                 <textarea id="translated-text" readonly placeholder="Traduction"></textarea>
                 <button class="textarea-btn speaker-btn" id="speaker-btn" type="button" title="Écouter la traduction">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                         <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                     </svg>
@@ -118,17 +121,17 @@
     <script>
         const languages = [
             "Afrikaans", "Allemand", "Anglais", "Arabe", "Bengali", "Bulgare",
-            "Catalan", "Chinois", "Coréen", "Croate", "Danois", "Espagnol", "Estonien", "Finnois",
-            "Français", "Galicien", "Géorgien", "Grec", "Gujarati", "Hébreu", "Hindi", "Hongrois",
-            "Indonésien", "Islandais", "Italien", "Japonais", "Kannada", "Kazakh", "Khmer", "Letton",
-            "Lituanien", "Macédonien", "Malais", "Malayalam", "Marathi", "Mongol", "Népalais",
-            "Néerlandais", "Norvégien", "Ourdou", "Ouzbek", "Persan", "Polonais", "Portugais",
-            "Pendjabi", "Roumain", "Russe", "Serbe", "Slovaque", "Slovène", "Somali", "Suédois",
-            "Swahili", "Tagalog", "Tamoul", "Tchèque", "Télougou", "Thaï", "Turc", "Ukrainien",
-            "Vietnamien", "Gallois", "Yoruba", "Zoulou"
+            "Chinois", "Coréen", "Croate", "Danois", "Espagnol", "Estonien", "Finnois",
+            "Français", "Grec", "Gujarati", "Hébreu", "Hindi", "Hongrois",
+            "Indonésien", "Islandais", "Italien", "Japonais", "Kannada", "Letton",
+            "Lituanien", "Malayalam", "Marathi",
+            "Néerlandais", "Ourdou", "Persan", "Polonais", "Portugais",
+            "Pendjabi", "Roumain", "Russe", "Serbe", "Slovaque", "Slovène", "Suédois",
+            "Tagalog", "Tamoul", "Tchèque", "Télougou", "Thaï", "Turc", "Ukrainien",
+            "Vietnamien", "Zoulou"
         ];
 
-        // Comprehensive map of all 66 speech-supported languages mapped to their BCP 47 locale codes
+        // Comprehensive map of all supported languages mapped to their BCP 47 locale codes
         const languageLocaleMap = {
             "Afrikaans": "af-ZA",
             "Allemand": "de-DE",
@@ -136,7 +139,6 @@
             "Arabe": "ar-SA",
             "Bengali": "bn-IN",
             "Bulgare": "bg-BG",
-            "Catalan": "ca-ES",
             "Chinois": "zh-CN",
             "Coréen": "ko-KR",
             "Croate": "hr-HR",
@@ -145,8 +147,6 @@
             "Estonien": "et-EE",
             "Finnois": "fi-FI",
             "Français": "fr-FR",
-            "Galicien": "gl-ES",
-            "Géorgien": "ka-GE",
             "Grec": "el-GR",
             "Gujarati": "gu-IN",
             "Hébreu": "he-IL",
@@ -157,20 +157,12 @@
             "Italien": "it-IT",
             "Japonais": "ja-JP",
             "Kannada": "kn-IN",
-            "Kazakh": "kk-KZ",
-            "Khmer": "km-KH",
             "Letton": "lv-LV",
             "Lituanien": "lt-LT",
-            "Macédonien": "mk-MK",
-            "Malais": "ms-MY",
             "Malayalam": "ml-IN",
             "Marathi": "mr-IN",
-            "Mongol": "mn-MN",
-            "Népalais": "ne-NP",
             "Néerlandais": "nl-NL",
-            "Norvégien": "no-NO",
             "Ourdou": "ur-PK",
-            "Ouzbek": "uz-UZ",
             "Persan": "fa-IR",
             "Polonais": "pl-PL",
             "Portugais": "pt-PT",
@@ -180,9 +172,7 @@
             "Serbe": "sr-RS",
             "Slovaque": "sk-SK",
             "Slovène": "sl-SI",
-            "Somali": "so-SO",
             "Suédois": "sv-SE",
-            "Swahili": "sw-KE",
             "Tagalog": "fil-PH",
             "Tamoul": "ta-IN",
             "Tchèque": "cs-CZ",
@@ -191,8 +181,6 @@
             "Turc": "tr-TR",
             "Ukrainien": "uk-UA",
             "Vietnamien": "vi-VN",
-            "Gallois": "cy-GB",
-            "Yoruba": "yo-NG",
             "Zoulou": "zu-ZA"
         };
 
@@ -263,7 +251,7 @@
             translatedText.value = srcTextVal;
 
             // Update character count and clear button visibility
-            charCount.textContent = `${sourceText.value.length} / 5000`;
+            charCount.textContent = `${sourceText.value.length} / 2000`;
             if (sourceText.value.length > 0) {
                 clearBtn.style.opacity = '1';
                 clearBtn.style.pointerEvents = 'auto';
@@ -375,17 +363,37 @@
             });
         });
 
-        // Translate logic execution
+        // Translate logic execution — with AbortController to cancel stale requests
+        let currentAbort = null;
+        let translationRequestId = 0;
+        let lastTranslationPayload = '';
         function performTranslation() {
             stopSpeaking();
             const text = sourceText.value;
             if (!text.trim()) {
                 translatedText.value = '';
+                targetWrapper.classList.remove('loading');
+                if (currentAbort) currentAbort.abort();
                 return;
             }
 
+            // Cancel any in-flight request
+            if (currentAbort) currentAbort.abort();
+            currentAbort = new AbortController();
+            const requestId = ++translationRequestId;
+
             const sourceLang = sourceHiddenInput.value;
             const targetLang = targetHiddenInput.value;
+            const inputChars = sourceText.value.length;
+            if (sourceLang !== "Détecter la langue" && sourceLang === targetLang) {
+                translatedText.value = text;
+                targetWrapper.classList.remove('loading');
+                return;
+            }
+
+            const payload = JSON.stringify({ text, sourceLang, targetLang, inputChars });
+            if (payload === lastTranslationPayload) return;
+            lastTranslationPayload = payload;
 
             targetWrapper.classList.add('loading');
 
@@ -397,25 +405,34 @@
                 body: JSON.stringify({
                     text: text,
                     source_lang: sourceLang,
-                    target_lang: targetLang
-                })
+                    target_lang: targetLang,
+                    input_chars: inputChars
+                }),
+                signal: currentAbort.signal
             })
                 .then(res => res.json())
                 .then(data => {
+                    if (requestId !== translationRequestId) return;
                     translatedText.value = data.translated_text || '';
                 })
                 .catch(err => {
-                    console.error('Translation error:', err);
+                    if (err.name !== 'AbortError') {
+                        if (payload === lastTranslationPayload) lastTranslationPayload = '';
+                        console.error('Translation error:', err);
+                    }
                 })
                 .finally(() => {
-                    targetWrapper.classList.remove('loading');
+                    if (requestId === translationRequestId) {
+                        targetWrapper.classList.remove('loading');
+                        currentAbort = null;
+                    }
                 });
         }
 
         // Debounced trigger on input
         function handleInput() {
             const text = sourceText.value;
-            charCount.textContent = `${text.length} / 5000`;
+            charCount.textContent = `${text.length} / 2000`;
 
             if (text.length > 0) {
                 clearBtn.style.opacity = '1';
@@ -424,12 +441,21 @@
                 clearBtn.style.opacity = '0';
                 clearBtn.style.pointerEvents = 'none';
                 translatedText.value = '';
+                targetWrapper.classList.remove('loading');
+                if (currentAbort) currentAbort.abort();
                 clearTimeout(debounceTimer);
                 return;
             }
 
+            if (text.trim().length < 2) {
+                translatedText.value = '';
+                targetWrapper.classList.remove('loading');
+                if (currentAbort) currentAbort.abort();
+                return;
+            }
+
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(performTranslation, 500);
+            debounceTimer = setTimeout(performTranslation, 300);
         }
 
         sourceText.addEventListener('input', handleInput);
@@ -441,9 +467,12 @@
             e.stopPropagation();
             sourceText.value = '';
             translatedText.value = '';
-            charCount.textContent = '0 / 5000';
+            charCount.textContent = '0 / 2000';
             clearBtn.style.opacity = '0';
             clearBtn.style.pointerEvents = 'none';
+            targetWrapper.classList.remove('loading');
+            if (currentAbort) currentAbort.abort();
+            lastTranslationPayload = '';
             stopSpeaking();
             sourceText.focus();
         });
@@ -556,4 +585,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -57,6 +57,11 @@ pyvenv.cfg
 # Local caches for model hubs (HuggingFace, etc.)
 .cache/
 .huggingface/
+# Local model directories (downloaded weights)
+model/
+model_mlx/
+model_4bit/
+model_4bit_test/
 # Vector Databases / Storage caches
 .chroma/
 .qdrant/

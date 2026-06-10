@@ -2,6 +2,8 @@ import urllib.request
 import urllib.parse
 import re
 from flask import Flask, render_template, request, jsonify, Response
+from prompt import translate_text
+
 
 app = Flask(__name__)
 
@@ -15,12 +17,13 @@ def translate():
     text = data.get("text", "")
     source_lang = data.get("source_lang", "Détecter la langue")
     target_lang = data.get("target_lang", "Anglais")
+    input_chars = data.get("input_chars")
     
     if not text.strip():
         return jsonify({"translated_text": ""})
     
-    # Return mock translation text
-    translated = f"[{target_lang}] {text}"
+    # Return translation text from prompt.py
+    translated = translate_text(text, source_lang, target_lang, input_chars)
     return jsonify({"translated_text": translated})
 
 @app.route("/api/tts")
@@ -87,4 +90,4 @@ def tts():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, port=54444)
+    app.run(debug=True, port=54444, use_reloader=False)
