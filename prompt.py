@@ -3,7 +3,15 @@ import time
 import threading
 import math
 from collections import OrderedDict
-from mlx_lm import load, stream_generate
+
+# Pick a backend for the model:
+#   * MLX        — Apple Silicon Macs (mlx_lm installed)
+#   * transformers — everything else (NVIDIA GPU via CUDA, or CPU)
+try:
+    from mlx_lm import load, stream_generate
+    BACKEND = "mlx"
+except ImportError:
+    BACKEND = "transformers"
 
 # Mapping from French names (as selected in UI) to standard ISO 639-1 / regionalized codes.
 # Only including the 49 supported languages that match the model's core capabilities.
@@ -60,20 +68,48 @@ LANGUAGE_MAP = {
 }
 
 # ──────────────────────────────────────────────
-# Global MLX model + tokenizer — loaded ONCE at import time
+# Global model + tokenizer — loaded ONCE at import time
 # ──────────────────────────────────────────────
-print("\n--- Preloading TranslateGemma MLX model ---")
+print(f"\n--- Preloading TranslateGemma model ({BACKEND} backend) ---")
 _load_start = time.time()
 
-model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_mlx")
-if os.path.exists(model_path) and os.listdir(model_path):
-    _model_to_load = model_path
-    print(f"Loading local MLX model from: {model_path}")
-else:
-    _model_to_load = "mlx-community/translategemma-4b-it-4bit"
-    print(f"Loading model '{_model_to_load}' from Hugging Face Hub")
+if BACKEND == "mlx":
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_mlx")
+    if os.path.exists(model_path) and os.listdir(model_path):
+        _model_to_load = model_path
+        print(f"Loading local MLX model from: {model_path}")
+    else:
+        _model_to_load = "mlx-community/translategemma-4b-it-4bit"
+        print(f"Loading model '{_model_to_load}' from Hugging Face Hub")
 
-MODEL, TOKENIZER = load(_model_to_load)
+    MODEL, TOKENIZER = load(_model_to_load)
+else:
+    # Use the model already cached in ~/.cache/huggingface; skip the
+    # Hub update-check so loading works without internet access.
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
+    import torch
+    from transformers import AutoProcessor, Gemma3ForConditionalGeneration, BitsAndBytesConfig
+
+    _model_to_load = "google/translategemma-4b-it"
+    if torch.cuda.is_available():
+        print("Loading on GPU (4-bit quantization, fits in 6 GB VRAM)")
+        MODEL = Gemma3ForConditionalGeneration.from_pretrained(
+            _model_to_load,
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+            ),
+            device_map="auto",
+        )
+    else:
+        print("No GPU found, loading on CPU (slow)")
+        MODEL = Gemma3ForConditionalGeneration.from_pretrained(_model_to_load, device_map="cpu")
+    MODEL.eval()
+
+    PROCESSOR = AutoProcessor.from_pretrained(_model_to_load)
+    TOKENIZER = PROCESSOR.tokenizer
+
 print(f"Model loaded in {time.time() - _load_start:.1f}s — ready for inference!\n")
 
 _GENERATE_LOCK = threading.Lock()
@@ -136,8 +172,8 @@ def _cache_set(key, value: str) -> None:
             _TRANSLATION_CACHE.popitem(last=False)
 
 
-def _build_prompt(text: str, source_code: str, target_code: str) -> str:
-    messages = [
+def _build_messages(text: str, source_code: str, target_code: str) -> list:
+    return [
         {
             "role": "user",
             "content": [
@@ -150,11 +186,6 @@ def _build_prompt(text: str, source_code: str, target_code: str) -> str:
             ]
         }
     ]
-    return TOKENIZER.apply_chat_template(
-        messages,
-        add_generation_prompt=True,
-        tokenize=False
-    )
 
 
 def _token_count(text: str) -> int:
@@ -164,33 +195,78 @@ def _token_count(text: str) -> int:
         return 0
 
 
-def _generate_translation(prompt: str, max_tokens: int) -> tuple[str, dict]:
-    text_parts = []
-    last_response = None
-    finish_reason = None
+if BACKEND == "mlx":
+    def _build_prompt(text: str, source_code: str, target_code: str) -> str:
+        return TOKENIZER.apply_chat_template(
+            _build_messages(text, source_code, target_code),
+            add_generation_prompt=True,
+            tokenize=False
+        )
 
-    for response in stream_generate(
-        MODEL,
-        TOKENIZER,
-        prompt=prompt,
-        max_tokens=max_tokens
-    ):
-        text_parts.append(response.text)
-        last_response = response
-        if "<end_of_turn>" in "".join(text_parts):
-            finish_reason = "stop"
-            break
+    def _generate_translation(prompt: str, max_tokens: int) -> tuple[str, dict]:
+        text_parts = []
+        last_response = None
+        finish_reason = None
 
-    response_text = "".join(text_parts).split("<end_of_turn>")[0].strip()
-    stats = {
-        "prompt_tokens": getattr(last_response, "prompt_tokens", 0),
-        "prompt_tps": getattr(last_response, "prompt_tps", 0.0),
-        "generation_tokens": getattr(last_response, "generation_tokens", 0),
-        "generation_tps": getattr(last_response, "generation_tps", 0.0),
-        "peak_memory": getattr(last_response, "peak_memory", 0.0),
-        "finish_reason": finish_reason or getattr(last_response, "finish_reason", None),
-    }
-    return response_text, stats
+        for response in stream_generate(
+            MODEL,
+            TOKENIZER,
+            prompt=prompt,
+            max_tokens=max_tokens
+        ):
+            text_parts.append(response.text)
+            last_response = response
+            if "<end_of_turn>" in "".join(text_parts):
+                finish_reason = "stop"
+                break
+
+        response_text = "".join(text_parts).split("<end_of_turn>")[0].strip()
+        stats = {
+            "prompt_tokens": getattr(last_response, "prompt_tokens", 0),
+            "prompt_tps": getattr(last_response, "prompt_tps", 0.0),
+            "generation_tokens": getattr(last_response, "generation_tokens", 0),
+            "generation_tps": getattr(last_response, "generation_tps", 0.0),
+            "peak_memory": getattr(last_response, "peak_memory", 0.0),
+            "finish_reason": finish_reason or getattr(last_response, "finish_reason", None),
+        }
+        return response_text, stats
+else:
+    def _build_prompt(text: str, source_code: str, target_code: str) -> list:
+        # transformers tokenizes inside _generate_translation, so the
+        # "prompt" here is just the messages list.
+        return _build_messages(text, source_code, target_code)
+
+    def _generate_translation(messages: list, max_tokens: int) -> tuple[str, dict]:
+        inputs = PROCESSOR.apply_chat_template(
+            messages,
+            add_generation_prompt=True,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
+        ).to(MODEL.device)
+        prompt_tokens = inputs["input_ids"].shape[-1]
+
+        start = time.time()
+        with torch.inference_mode():
+            output = MODEL.generate(**inputs, max_new_tokens=max_tokens, do_sample=False)
+        elapsed = time.time() - start
+
+        new_tokens = output[0][prompt_tokens:]
+        response_text = PROCESSOR.decode(new_tokens, skip_special_tokens=True).strip()
+
+        generation_tokens = len(new_tokens)
+        peak_memory = (
+            torch.cuda.max_memory_allocated() / 1e9 if torch.cuda.is_available() else 0.0
+        )
+        stats = {
+            "prompt_tokens": prompt_tokens,
+            "prompt_tps": 0.0,
+            "generation_tokens": generation_tokens,
+            "generation_tps": generation_tokens / elapsed if elapsed > 0 else 0.0,
+            "peak_memory": peak_memory,
+            "finish_reason": "stop" if generation_tokens < max_tokens else "length",
+        }
+        return response_text, stats
 
 
 def _warm_model() -> None:
