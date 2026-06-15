@@ -1,7 +1,4 @@
 import os
-
-# Use the model already saved on disk (~/.cache/huggingface),
-# don't try to connect to the internet.
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 import torch
